@@ -1,4 +1,4 @@
-package deeplx
+package deeplx_translator
 
 type APIVersion uint8
 

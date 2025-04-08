@@ -1,4 +1,4 @@
-package deeplx
+package deeplx_translator
 
 import (
 	"fmt"
