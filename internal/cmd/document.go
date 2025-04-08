@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/xjasonlyu/deeplx-translator/deepl"
+	"github.com/xjasonlyu/deeplx-translator/deeplx"
 
 	"github.com/xjasonlyu/deeplx-translator/internal/command"
 )
@@ -91,22 +91,22 @@ func (c *DocumentUploadCmdConfig) Exec(ctx context.Context, args []string) error
 		return err
 	}
 
-	opts := []deepl.TranslateOption{}
+	opts := []deeplx.TranslateOption{}
 	c.flags.Visit(func(f *flag.Flag) {
 		switch f.Name {
 		case "source-lang":
-			opts = append(opts, deepl.WithSourceLang(c.sourceLang))
+			opts = append(opts, deeplx.WithSourceLang(c.sourceLang))
 		case "formality":
-			opts = append(opts, deepl.WithFormality(c.formality))
+			opts = append(opts, deeplx.WithFormality(c.formality))
 		case "glossary-id":
-			opts = append(opts, deepl.WithGlossaryID(c.glossaryID))
+			opts = append(opts, deeplx.WithGlossaryID(c.glossaryID))
 		}
 	})
 
 	type document struct {
 		Path string `json:"document_path"`
 
-		deepl.DocumentInfo
+		deeplx.DocumentInfo
 	}
 
 	var docs []document
@@ -178,19 +178,19 @@ func (c *DocumentStatusCmdConfig) Exec(ctx context.Context, args []string) error
 		return err
 	}
 
-	var dis []deepl.DocumentInfo
+	var dis []deeplx.DocumentInfo
 	for _, arg := range args {
 		info := strings.Split(arg, ":")
 		if len(info) != 2 {
 			return fmt.Errorf("invalid argument: %s", arg)
 		}
-		dis = append(dis, deepl.DocumentInfo{
+		dis = append(dis, deeplx.DocumentInfo{
 			DocumentId:  info[0],
 			DocumentKey: info[1],
 		})
 	}
 
-	var dss []*deepl.DocumentStatus
+	var dss []*deeplx.DocumentStatus
 
 	defer func() {
 		marshalled, err := json.Marshal(dss)
@@ -263,7 +263,7 @@ func (c *DocumentDownloadCmdConfig) Exec(ctx context.Context, args []string) err
 	if len(info) != 2 {
 		return fmt.Errorf("invalid argument: %s", args[0])
 	}
-	di := deepl.DocumentInfo{
+	di := deeplx.DocumentInfo{
 		DocumentId:  info[0],
 		DocumentKey: info[1],
 	}

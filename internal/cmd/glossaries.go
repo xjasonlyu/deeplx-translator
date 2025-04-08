@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/xjasonlyu/deeplx-translator/deepl"
+	"github.com/xjasonlyu/deeplx-translator/deeplx"
 
 	"github.com/xjasonlyu/deeplx-translator/internal/command"
 )
@@ -169,14 +169,14 @@ func (c *GlossariesCreateCmdConfig) Exec(ctx context.Context, args []string) err
 		return flag.ErrHelp
 	}
 
-	var entries = make([]deepl.GlossaryEntry, 0, len(args))
+	var entries = make([]deeplx.GlossaryEntry, 0, len(args))
 	for _, arg := range args {
 		pair := strings.Split(arg, "=")
 		if len(pair) != 2 {
 			fmt.Fprintf(c.stderr, "Error: glossary create: invalid argument: %s", arg)
 			return flag.ErrHelp
 		}
-		entries = append(entries, deepl.GlossaryEntry{Source: pair[0], Target: pair[1]})
+		entries = append(entries, deeplx.GlossaryEntry{Source: pair[0], Target: pair[1]})
 	}
 
 	t, err := newTranslator(c.RootCmdConfig)
@@ -302,7 +302,7 @@ func (c *GlossariesInfoCmdConfig) Exec(ctx context.Context, args []string) error
 		return err
 	}
 
-	var gs []*deepl.GlossaryInfo
+	var gs []*deeplx.GlossaryInfo
 
 	defer func() {
 		m, err := json.Marshal(gs)

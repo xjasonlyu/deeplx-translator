@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/xjasonlyu/deeplx-translator/deepl"
+	"github.com/xjasonlyu/deeplx-translator/deeplx"
 
 	"github.com/xjasonlyu/deeplx-translator/internal/command"
 )
@@ -72,14 +72,14 @@ func (c *RootCmdConfig) Exec(ctx context.Context, args []string) error {
 	return flag.ErrHelp
 }
 
-func newTranslator(cfg RootCmdConfig) (*deepl.Translator, error) {
-	opts := []deepl.TranslatorOption{}
+func newTranslator(cfg RootCmdConfig) (*deeplx.Translator, error) {
+	opts := []deeplx.TranslatorOption{}
 
 	if cfg.serverURL != "" {
-		opts = append(opts, deepl.WithServerURL(cfg.serverURL))
+		opts = append(opts, deeplx.WithServerURL(cfg.serverURL))
 	}
 
-	return deepl.NewTranslator(cfg.authKey, opts...)
+	return deeplx.NewTranslator(cfg.authKey, opts...)
 }
 
 func Configure() *command.Command {

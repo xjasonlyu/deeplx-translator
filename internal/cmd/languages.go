@@ -10,7 +10,7 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
-	"github.com/xjasonlyu/deeplx-translator/deepl"
+	"github.com/xjasonlyu/deeplx-translator/deeplx"
 
 	"github.com/xjasonlyu/deeplx-translator/internal/command"
 )
@@ -88,7 +88,7 @@ func btoi(b bool) int {
 	return 0
 }
 
-func writeLanguages(out io.Writer, langs []deepl.Language) {
+func writeLanguages(out io.Writer, langs []deeplx.Language) {
 	for _, lang := range langs {
 		if lang.SupportsFormality {
 			fmt.Fprintf(out, "%s: %s (supports formality)\n", lang.Code, lang.Name)

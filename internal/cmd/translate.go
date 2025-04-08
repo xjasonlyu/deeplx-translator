@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/xjasonlyu/deeplx-translator/deepl"
+	"github.com/xjasonlyu/deeplx-translator/deeplx"
 
 	"github.com/xjasonlyu/deeplx-translator/internal/command"
 )
@@ -91,29 +91,29 @@ func (c *TranslateTextCmdConfig) Exec(ctx context.Context, args []string) error 
 		return err
 	}
 
-	opts := []deepl.TranslateOption{}
+	opts := []deeplx.TranslateOption{}
 	c.flags.Visit(func(f *flag.Flag) {
 		switch f.Name {
 		case "source-lang":
-			opts = append(opts, deepl.WithSourceLang(c.sourceLang))
+			opts = append(opts, deeplx.WithSourceLang(c.sourceLang))
 		case "split-sentences":
-			opts = append(opts, deepl.WithSplitSentences(c.splitSentences))
+			opts = append(opts, deeplx.WithSplitSentences(c.splitSentences))
 		case "preserve-formatting":
-			opts = append(opts, deepl.WithPreserveFormatting(c.preserveFormatting))
+			opts = append(opts, deeplx.WithPreserveFormatting(c.preserveFormatting))
 		case "formality":
-			opts = append(opts, deepl.WithFormality(c.formality))
+			opts = append(opts, deeplx.WithFormality(c.formality))
 		case "glossary-id":
-			opts = append(opts, deepl.WithGlossaryID(c.glossaryID))
+			opts = append(opts, deeplx.WithGlossaryID(c.glossaryID))
 		case "tag-handling":
-			opts = append(opts, deepl.WithTagHandling(c.tagHandling))
+			opts = append(opts, deeplx.WithTagHandling(c.tagHandling))
 		case "outline-detection":
-			opts = append(opts, deepl.WithOutlineDetection(c.outlineDetection))
+			opts = append(opts, deeplx.WithOutlineDetection(c.outlineDetection))
 		case "non-splitting-tags":
-			opts = append(opts, deepl.WithNonSplittingTags(strings.Split(c.nonSplittingTags, ",")))
+			opts = append(opts, deeplx.WithNonSplittingTags(strings.Split(c.nonSplittingTags, ",")))
 		case "splitting-tags":
-			opts = append(opts, deepl.WithSplittingTags(strings.Split(c.splittingTags, ",")))
+			opts = append(opts, deeplx.WithSplittingTags(strings.Split(c.splittingTags, ",")))
 		case "ignore-tags":
-			opts = append(opts, deepl.WithIgnoreTags(strings.Split(c.ignoreTags, ",")))
+			opts = append(opts, deeplx.WithIgnoreTags(strings.Split(c.ignoreTags, ",")))
 		}
 	})
 
