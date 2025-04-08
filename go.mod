@@ -1,5 +1,5 @@
-module github.com/cluttrdev/deepl-go
+module github.com/xjasonlyu/deeplx-translator
 
-go 1.21
+go 1.23.0
 
-require golang.org/x/text v0.7.0
+require golang.org/x/text v0.24.0

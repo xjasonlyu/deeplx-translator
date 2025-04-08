@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cluttrdev/deepl-go/internal/cmd"
+	"github.com/xjasonlyu/deeplx-translator/internal/cmd"
 )
 
 func main() {

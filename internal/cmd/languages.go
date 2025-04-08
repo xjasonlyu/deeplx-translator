@@ -10,9 +10,9 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
-	"github.com/cluttrdev/deepl-go/deepl"
+	"github.com/xjasonlyu/deeplx-translator/deepl"
 
-	"github.com/cluttrdev/deepl-go/internal/command"
+	"github.com/xjasonlyu/deeplx-translator/internal/command"
 )
 
 type LanguagesCmdConfig struct {
