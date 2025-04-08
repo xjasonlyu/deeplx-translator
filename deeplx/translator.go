@@ -36,6 +36,7 @@ func WithServerURL(rawURL string) TranslatorOption {
 		t.serverURL = (&url.URL{
 			Scheme: parsed.Scheme,
 			Host:   parsed.Host,
+			Path:   parsed.Path,
 		}).String()
 		return nil
 	}

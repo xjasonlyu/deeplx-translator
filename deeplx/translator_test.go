@@ -59,7 +59,7 @@ func (s *TranslatorTestSuite) TestWithServerURL() {
 	tr := &Translator{}
 	err := opt(tr)
 	s.NoError(err)
-	s.Equal("https://custom.example.com", tr.serverURL)
+	s.Equal("https://custom.example.com/path", tr.serverURL)
 }
 
 // TestWithServerURL_InvalidURL checks error behavior on malformed URL.
@@ -86,7 +86,7 @@ func (s *TranslatorTestSuite) TestCallAPI_Success() {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.Equal(http.MethodPost, r.Method)
 		s.Equal("DeepL-Auth-Key "+s.defaultAuthKey, r.Header.Get("Authorization"))
-		s.Equal("/v2/translate", r.URL.Path)
+		s.Equal("/test-path/v2/translate", r.URL.Path)
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(mockResp))
 	}))
@@ -94,11 +94,11 @@ func (s *TranslatorTestSuite) TestCallAPI_Success() {
 
 	tr, err := NewTranslator(s.defaultAuthKey,
 		WithHTTPClient(&http.Client{}),
-		WithServerURL(server.URL),
+		WithServerURL(server.URL+"/test-path/"),
 	)
 	s.NoError(err)
 
-	res, err := tr.callAPI(http.MethodPost, "/v2/translate", http.Header{
+	res, err := tr.callAPI(http.MethodPost, "v2/translate", http.Header{
 		"Content-Type": []string{"application/json"},
 	}, strings.NewReader(`{"text": "Hello"}`))
 
