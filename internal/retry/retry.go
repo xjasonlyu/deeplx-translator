@@ -81,7 +81,7 @@ type Option func(*Config) error
 func MaxAttempts(n int) Option {
 	return func(c *Config) error {
 		if n < 0 {
-			return errors.New("Maximum retries must be non-negative")
+			return errors.New("maximum retries must be non-negative")
 		}
 		c.maxAttempts = n
 		return nil
@@ -98,7 +98,7 @@ func RetryIf(fn func(error) bool) Option {
 func WithContext(ctx context.Context) Option {
 	return func(c *Config) error {
 		if ctx == nil {
-			return errors.New("Context must not be nil")
+			return errors.New("context must not be nil")
 		}
 		c.context = ctx
 		return nil
