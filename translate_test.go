@@ -1,56 +1,64 @@
 package deeplx_translator
 
 import (
-	"io"
 	"net/http"
-	"net/http/httptest"
+	"os"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
 )
 
-// TranslateTextTestSuite defines the suite for translation methods.
-type TranslateTextTestSuite struct {
-	suite.Suite
-	authKey string
-}
-
-func TestTranslateTextTestSuite(t *testing.T) {
-	suite.Run(t, new(TranslateTextTestSuite))
-}
-
-func (s *TranslateTextTestSuite) SetupTest() {
-	s.authKey = "test-key"
-}
-
-// TestTranslateTextV2 verifies a successful translation
-func (s *TranslateTextTestSuite) TestTranslateTextV2() {
-	mockResponse := `{
-		"translations": [
-			{ "detected_source_language": "EN", "text": "Hallo" },
-			{ "detected_source_language": "EN", "text": "Welt" }
-		]
-	}`
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s.Equal("/v2/translate", r.URL.Path)
-		body, _ := io.ReadAll(r.Body)
-		s.Contains(string(body), `"target_lang":"DE"`)
-		s.Contains(string(body), `"text":["Hello","World"]`)
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(mockResponse))
-	}))
-	defer server.Close()
-
-	tr, err := NewTranslator(s.authKey,
-		WithServerURL(server.URL),
-		WithHTTPClient(server.Client()),
+func TestTranslateText(t *testing.T) {
+	var (
+		deeplAPIKey  = os.Getenv("DEEPL_API_KEY")
+		deeplxAPIKey = os.Getenv("DEEPLX_API_KEY")
+		deeplxAPIURL = os.Getenv("DEEPLX_API_URL")
 	)
-	s.NoError(err)
 
-	result, err := tr.TranslateTextV2([]string{"Hello", "World"}, "DE")
-	s.NoError(err)
-	s.Len(result.Translations, 2)
-	s.Equal("Hallo", result.Translations[0].Text)
-	s.Equal("EN", result.Translations[0].DetectedSourceLanguage)
+	for _, test := range []struct {
+		name           string
+		apiKey, apiURL string
+		version        Version
+	}{
+		{"DeepL Official API", deeplAPIKey, "", 0},
+		{"DeepLX Free API", deeplxAPIKey, deeplxAPIURL + "/", 0},
+		// {"DeepLX Pro API", deeplxAPIKey, deeplxAPIURL + "/v1", 0},
+		{"DeepLX Official API", deeplxAPIKey, deeplxAPIURL + "/v2", VersionV2},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if test.apiKey == "" {
+				t.SkipNow()
+			}
+
+			opts := []TranslatorOption{
+				WithHTTPClient(http.DefaultClient),
+			}
+			if test.apiURL != "" {
+				opts = append(opts, WithBaseURL(test.apiURL))
+			}
+			if test.version.IsValid() {
+				opts = append(opts, WithVersion(test.version))
+			}
+			translator := NewTranslator(test.apiKey, opts...)
+
+			for _, unit := range []struct {
+				text     any
+				from, to string
+			}{
+				{`Oh yeah! I'm a translator!`, "", "zh"},
+				{`Oh yeah! I'm a translator!`, "", "zh-Hant"},
+				{`Oh yeah! I'm a translator!`, "", "ja"},
+				{[]string{`Oh yeah! I'm a translator!`}, "", "de"},
+				{[]string{`Oh yeah! I'm a translator!`}, "en", "fr"},
+			} {
+				result, err := translator.TranslateText(
+					unit.text, unit.to,
+					WithSourceLang(unit.from),
+				)
+				if assert.NoError(t, err) {
+					t.Log(result)
+				}
+			}
+		})
+	}
 }

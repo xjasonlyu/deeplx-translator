@@ -287,5 +287,5 @@ func WithIgnoreTags(value []string) TranslateOption {
 }
 
 func translateOptionInvalidValueError(name string, value string) error {
-	return fmt.Errorf("Invalid value for option `%s`: %s", name, value)
+	return fmt.Errorf("invalid value for option `%s`: %s", name, value)
 }
