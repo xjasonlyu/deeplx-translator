@@ -1,6 +1,6 @@
 # DeepL(X) Translator
 
-A translator library compatible with both the [DeepL](https://developers.deepl.com/docs) and [DeepLX](https://deeplx.owo.network/) APIs.
+A Golang translation library compatible with both the [DeepL](https://developers.deepl.com/docs) and [DeepLX](https://deeplx.owo.network/) APIs.
 
 ## Installation
 
