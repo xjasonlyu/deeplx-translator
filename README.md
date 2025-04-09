@@ -21,13 +21,13 @@ import (
     "fmt"
     "log"
     
-    deepl "github.com/xjasonlyu/deeplx-translator"
+    deeplx "github.com/xjasonlyu/deeplx-translator"
 )
 
 func main() {
     authKey := "f63c02c5-f056-..."  // Replace with your key
 
-    translator, err := deepl.NewTranslator(authKey)
+    translator, err := deeplx.NewTranslator(authKey)
     if err != nil {
         log.Fatal(err)
     }
