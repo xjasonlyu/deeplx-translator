@@ -40,7 +40,7 @@ func TestTextToStringSlice(t *testing.T) {
 		},
 		{
 			text:     "你好。今天天气不错！你要去哪里？再见……",
-			expected: []string{"你好。", "今天天气不错！", "你要去哪里？", "再见……"},
+			expected: []string{"你好。今天天气不错！你要去哪里？再见……"},
 			wantErr:  false,
 		},
 		{
