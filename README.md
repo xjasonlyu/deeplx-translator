@@ -14,32 +14,85 @@ go get -u github.com/xjasonlyu/deeplx-translator
 
 Import the package and create a `Translator`.
 
+### Basic
+
 ```go
 package main
 
 import (
-    "fmt"
-    "log"
-    
-    deeplx "github.com/xjasonlyu/deeplx-translator"
+	"fmt"
+	"log"
+	"os"
+
+	deeplx "github.com/xjasonlyu/deeplx-translator"
 )
 
 func main() {
-    authKey := "f63c02c5-f056-..."  // Replace with your key
+	deeplAPIKey := os.Getenv("DEEPL_API_KEY")
 
-    translator, err := deeplx.NewTranslator(authKey)
-    if err != nil {
-        log.Fatal(err)
-    }
+	translator := deeplx.NewTranslator(deeplAPIKey)
 
-    translations, err := translator.TranslateText([]string{"Hello, world!"}, "FR")
-    if err != nil {
-        log.Fatal(err)
-    }
+	text, err := translator.TranslateText("Hello, world!", "ZH")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    fmt.Println(translations[0].Text)  // "Bonjour, le monde !"
+	fmt.Println(text) // "你好，世界"
 }
 ```
+
+### Advanced
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"os"
+
+	deeplx "github.com/xjasonlyu/deeplx-translator"
+)
+
+func main() {
+	deeplxAPIKey := os.Getenv("DEEPLX_API_KEY")
+	deeplxAPIURL := os.Getenv("DEEPLX_API_URL")
+
+	{ // Use Free/Pro DeepLX API (v1)
+		translator := deeplx.NewTranslator(
+			deeplxAPIKey,
+			deeplx.WithBaseURL(deeplxAPIURL),
+			deeplx.WithVersion(deeplx.VersionV1), // <-- Optional
+		)
+
+		text, err := translator.TranslateText("Hello, world!", "ZH")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println(text) // "你好，世界"
+	}
+
+	{ // Use Official DeepLX API (v2)
+		translator := deeplx.NewTranslator(
+			deeplxAPIKey,
+			deeplx.WithBaseURL(deeplxAPIURL+"/v2"), // <-- full URL is required
+		)
+
+		text, err := translator.TranslateText(
+			[]string{"Hello, world!"}, // <- text can be either string or []string
+			"FR",
+			deeplx.WithSourceLang("EN-GB"),
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println(text) // "Bonjour à tous !"
+	}
+}
+```
+
 
 ## Credits
 
