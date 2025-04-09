@@ -1,6 +1,7 @@
 # DeepL(X) Translator
 
-A Golang translation library compatible with both the [DeepL](https://developers.deepl.com/docs) and [DeepLX](https://deeplx.owo.network/) APIs.
+A Golang translation library compatible with both the [DeepL](https://developers.deepl.com/docs)
+and [DeepLX](https://deeplx.owo.network/) APIs.
 
 ## Installation
 
@@ -56,7 +57,7 @@ import (
 
 func main() {
 	deeplxAPIKey := os.Getenv("DEEPLX_API_KEY")
-	deeplxAPIURL := os.Getenv("DEEPLX_API_URL")
+	deeplxAPIURL := os.Getenv("DEEPLX_API_URL") // https://your-deeplx-api-url
 
 	{ // Use Free/Pro DeepLX API (v1)
 		translator := deeplx.NewTranslator(
@@ -92,7 +93,6 @@ func main() {
 	}
 }
 ```
-
 
 ## Credits
 
