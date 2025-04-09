@@ -26,7 +26,7 @@ func textToString(text any) (string, error) {
 func textToStringSlice(text any) ([]string, error) {
 	switch v := text.(type) {
 	case string:
-		if len(v) < 100 {
+		if len([]rune(v)) < 1000 {
 			return []string{v}, nil
 		}
 		return splitTextsAfter(v, defaultSentenceTerminators...), nil
