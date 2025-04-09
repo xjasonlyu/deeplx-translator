@@ -1,96 +1,88 @@
 package deeplx_translator
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
-
-	"github.com/xjasonlyu/deeplx-translator/internal/retry"
 )
 
 const (
-	ServerURLPro  = "https://api.deepl.com"
-	ServerURLFree = "https://api-free.deepl.com"
+	deeplProAPIURLv2  = "https://api.deepl.com/v2"
+	deeplFreeAPIURLv2 = "https://api-free.deepl.com/v2"
 )
 
 type Translator struct {
-	client    HTTPClient
-	serverURL string
-	authKey   string
+	client  HTTPClient
+	baseURL string
+	authKey string
+	version Version
 }
 
-// TranslatorOption is a functional option for configuring the Translator
-type TranslatorOption func(*Translator) error
+// TranslatorOption is a functional option for configuring the Translator.
+type TranslatorOption func(*Translator)
 
-// WithServerURL allows overriding the default server url.
-func WithServerURL(rawURL string) TranslatorOption {
-	return func(t *Translator) error {
-		parsed, err := url.Parse(rawURL)
-		if err != nil {
-			return err
-		}
-		t.serverURL = (&url.URL{
-			Scheme: parsed.Scheme,
-			Host:   parsed.Host,
-			Path:   parsed.Path,
-		}).String()
-		return nil
+// WithBaseURL allows overriding the default base API url.
+func WithBaseURL(baseURL string) TranslatorOption {
+	return func(t *Translator) {
+		t.baseURL = strings.TrimRight(baseURL, "/")
+	}
+}
+
+// WithVersion allows specifying the deepl API version.
+func WithVersion(version Version) TranslatorOption {
+	return func(t *Translator) {
+		t.version = version
 	}
 }
 
 // WithHTTPClient allows overriding the default http client.
 func WithHTTPClient(c HTTPClient) TranslatorOption {
-	return func(t *Translator) error {
+	return func(t *Translator) {
 		t.client = c
-		return nil
 	}
 }
 
 // NewTranslator creates a new translator.
-func NewTranslator(authKey string, opts ...TranslatorOption) (*Translator, error) {
-	// Determine default server url based on auth key
-	var serverURL string
+func NewTranslator(authKey string, opts ...TranslatorOption) *Translator {
+	// Determine default base url based on the auth key.
+	var baseURL string
 	if isFreeAccountAuthKey(authKey) {
-		serverURL = ServerURLFree
+		baseURL = deeplFreeAPIURLv2
 	} else {
-		serverURL = ServerURLPro
+		baseURL = deeplProAPIURLv2
 	}
 
-	// Set up with default http client
+	// Set up with default http client.
 	t := &Translator{
 		client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
-		serverURL: serverURL,
-		authKey:   authKey,
+		baseURL: baseURL,
+		authKey: authKey,
+	}
+	t.applyOptions(opts...)
+
+	// Auto infer API version from base url.
+	if !t.version.IsValid() {
+		t.version = inferVersionFromBaseURL(t.baseURL)
 	}
 
-	if err := t.applyOptions(opts...); err != nil {
-		return nil, err
-	}
-
-	return t, nil
+	return t
 }
 
 // applyOptions applies the supplied functional options to the Translator.
-func (t *Translator) applyOptions(opts ...TranslatorOption) error {
-	for _, opt := range opts {
-		err := opt(t)
-		if err != nil {
-			return err
-		}
+func (t *Translator) applyOptions(opts ...TranslatorOption) {
+	for _, option := range opts {
+		option(t)
 	}
-
-	return nil
 }
 
 // callAPI calls the supplied API endpoint with the provided parameters and returns the response.
 func (t *Translator) callAPI(method string, endpoint string, headers http.Header, body io.Reader) (*http.Response, error) {
-	apiURL, err := url.JoinPath(t.serverURL, endpoint)
+	apiURL, err := url.JoinPath(t.baseURL, endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("error joining API url: %w", err)
 	}
@@ -100,46 +92,16 @@ func (t *Translator) callAPI(method string, endpoint string, headers http.Header
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("DeepL-Auth-Key %s", t.authKey))
+	if t.authKey != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("DeepL-Auth-Key %s", t.authKey))
+	}
 	for k, vs := range headers {
 		for _, v := range vs {
 			req.Header.Set(k, v)
 		}
 	}
 
-	res, err := retry.DoWithData(
-		func() (*http.Response, error) {
-			res, err := t.client.Do(req)
-			if err != nil {
-				return res, err
-			} else if err := retriableHTTPError(res.StatusCode); err != nil {
-				return res, err
-			}
-			return res, nil
-		},
-		retry.RetryIf(func(err error) bool {
-			return isRetriableHTTPError(err)
-		}),
-		retry.MaxAttempts(5),
-		retry.WithBackoff(&retry.Backoff{
-			InitialDelay: 1 * time.Second,
-			MaxDelay:     120 * time.Second,
-			Factor:       1.6,
-			Jitter:       0.23,
-		}),
-	)
-
-	return res, err
-}
-
-func isRetriableHTTPError(err error) bool {
-	switch {
-	case errors.Is(err, ErrorStatusTooManyRequests):
-		return true
-	case errors.Is(err, ErrorStatusInternalServerError):
-		return true
-	}
-	return false
+	return t.client.Do(req)
 }
 
 // isFreeAccountAuthKey determines whether the supplied auth key belongs to a Free account.
