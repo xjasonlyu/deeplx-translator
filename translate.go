@@ -94,7 +94,7 @@ func (t *Translator) translateRequest(text any, targetLang string, opts ...Trans
 		Text:       text,
 		TargetLang: targetLang,
 	}
-	if err := data.TranslateOptions.Gather(opts...); err != nil {
+	if err := data.Gather(opts...); err != nil {
 		return nil, fmt.Errorf("error setting translate option: %w", err)
 	}
 
@@ -112,6 +112,7 @@ func (t *Translator) translateRequest(text any, targetLang string, opts ...Trans
 	if err != nil {
 		return nil, err
 	}
+	//nolint:errcheck
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		return nil, httpError(res.StatusCode)
