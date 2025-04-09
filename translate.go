@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
+	"strings"
 )
 
-// TranslationResultV1 holds the results of a text translation request of v1.
 type TranslationResultV1 struct {
 	Code         int      `json:"code"`
 	ID           int64    `json:"id"`
@@ -20,7 +19,6 @@ type TranslationResultV1 struct {
 	Method       string   `json:"method"`
 }
 
-// TranslationResultV2 holds the results of a text translation request of v2.
 type TranslationResultV2 struct {
 	Translations []struct {
 		DetectedSourceLanguage string `json:"detected_source_language"`
@@ -28,23 +26,68 @@ type TranslationResultV2 struct {
 	} `json:"translations"`
 }
 
-// TranslateTextV2 translates the given text(s) into the specified target language.
-func (t *Translator) translateText(text []string, targetLang string, version APIVersion, opts ...TranslateOption) ([]byte, error) {
-	var endpoint string
-	switch version {
-	case FreeAPI:
-		endpoint = "translate"
-	case ProAPI:
-		endpoint = "v1/translate"
-	case OfficialAPI:
-		endpoint = "v2/translate"
+func (t *Translator) TranslateText(text any, targetLang string, opts ...TranslateOption) (string, error) {
+	switch t.version {
+	case VersionV1:
+		v, err := textToString(text)
+		if err != nil {
+			return "", err
+		}
+		resp, err := t.TranslateTextV1(v, targetLang, opts...)
+		if err != nil {
+			return "", err
+		}
+		return resp.Data, nil
+	case VersionV2:
+		v, err := textToStringSlice(text)
+		if err != nil {
+			return "", err
+		}
+		resp, err := t.TranslateTextV2(v, targetLang, opts...)
+		if err != nil {
+			return "", err
+		}
+		sb := &strings.Builder{}
+		for _, tl := range resp.Translations {
+			sb.WriteString(tl.Text)
+		}
+		return sb.String(), nil
 	default:
-		return nil, fmt.Errorf("invalid API version: %d", version)
+		return "", fmt.Errorf("invalid API version: %d", t.version)
 	}
+}
+
+func (t *Translator) TranslateTextV1(text string, targetLang string, opts ...TranslateOption) (*TranslationResultV1, error) {
+	resp, err := t.translateRequest(text, targetLang, opts...)
+	if err != nil {
+		return nil, err
+	}
+	if result, ok := resp.(*TranslationResultV1); ok {
+		return result, nil
+	}
+	return nil, fmt.Errorf("invalid response type: %T", resp)
+}
+
+func (t *Translator) TranslateTextV2(text []string, targetLang string, opts ...TranslateOption) (*TranslationResultV2, error) {
+	resp, err := t.translateRequest(text, targetLang, opts...)
+	if err != nil {
+		return nil, err
+	}
+	if result, ok := resp.(*TranslationResultV2); ok {
+		return result, nil
+	}
+	return nil, fmt.Errorf("invalid response type: %T", resp)
+}
+
+func (t *Translator) translateRequest(text any, targetLang string, opts ...TranslateOption) (any, error) {
+	const (
+		endpoint = "translate"
+		method   = http.MethodPost
+	)
 
 	data := struct {
-		Text       []string `json:"text"`
-		TargetLang string   `json:"target_lang"`
+		Text       any    `json:"text"`
+		TargetLang string `json:"target_lang"`
 
 		TranslateOptions
 	}{
@@ -65,7 +108,7 @@ func (t *Translator) translateText(text []string, targetLang string, version API
 	}
 
 	// Send request
-	res, err := t.callAPI(http.MethodPost, endpoint, headers, bytes.NewReader(body))
+	res, err := t.callAPI(method, endpoint, headers, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
@@ -74,52 +117,15 @@ func (t *Translator) translateText(text []string, targetLang string, version API
 		return nil, httpError(res.StatusCode)
 	}
 
-	return io.ReadAll(res.Body)
-}
-
-func (t *Translator) TranslateText(text []string, targetLang string, opts ...TranslateOption) (string, error) {
-	data, err := t.translateText(text, targetLang, OfficialAPI, opts...)
-	if err != nil {
-		return "", err
-	}
-
 	// Parse response
-	var response TranslationResultV1
-	if err := json.NewDecoder(bytes.NewReader(data)).Decode(&response); err != nil {
-		return "", err
-	}
+	var response = map[Version]any{
+		VersionV1: &TranslationResultV1{},
+		VersionV2: &TranslationResultV2{},
+	}[t.version]
 
-	return "", nil
-}
-
-// TranslateTextV1 translates the given text(s) into the specified target language.
-func (t *Translator) TranslateTextV1(text []string, targetLang string, opts ...TranslateOption) (*TranslationResultV1, error) {
-	data, err := t.translateText(text, targetLang, OfficialAPI, opts...)
-	if err != nil {
+	if err := json.NewDecoder(res.Body).Decode(response); err != nil {
 		return nil, err
 	}
 
-	// Parse response
-	var response TranslationResultV1
-	if err := json.NewDecoder(bytes.NewReader(data)).Decode(&response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
-}
-
-// TranslateTextV2 translates the given text(s) into the specified target language.
-func (t *Translator) TranslateTextV2(text []string, targetLang string, opts ...TranslateOption) (*TranslationResultV2, error) {
-	data, err := t.translateText(text, targetLang, OfficialAPI, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	// Parse response
-	var response TranslationResultV2
-	if err := json.NewDecoder(bytes.NewReader(data)).Decode(&response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return response, nil
 }
