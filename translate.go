@@ -58,6 +58,9 @@ func (t *Translator) TranslateText(text any, targetLang string, opts ...Translat
 }
 
 func (t *Translator) TranslateTextV1(text string, targetLang string, opts ...TranslateOption) (*TranslationResultV1, error) {
+	if t.version != VersionV1 {
+		return nil, fmt.Errorf("mismatched API version, expected v1 but got v%d", t.version)
+	}
 	resp, err := t.translateRequest(text, targetLang, opts...)
 	if err != nil {
 		return nil, err
@@ -69,6 +72,9 @@ func (t *Translator) TranslateTextV1(text string, targetLang string, opts ...Tra
 }
 
 func (t *Translator) TranslateTextV2(text []string, targetLang string, opts ...TranslateOption) (*TranslationResultV2, error) {
+	if t.version != VersionV2 {
+		return nil, fmt.Errorf("mismatched API version, expected v2 but got v%d", t.version)
+	}
 	resp, err := t.translateRequest(text, targetLang, opts...)
 	if err != nil {
 		return nil, err
