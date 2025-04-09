@@ -15,8 +15,6 @@ type TranslateOptions struct {
 	NonSplittingTags   []*string `json:"non_splitting_tags,omitempty"`
 	SplittingTags      []*string `json:"splitting_tags,omitempty"`
 	IgnoreTags         []*string `json:"ignore_tags,omitempty"`
-
-	APIVersion APIVersion `json:"-"`
 }
 
 func (o *TranslateOptions) Gather(opts ...TranslateOption) error {
@@ -30,14 +28,6 @@ func (o *TranslateOptions) Gather(opts ...TranslateOption) error {
 
 // TranslateOption can be used to customize the translation engine.
 type TranslateOption func(*TranslateOptions) error
-
-// WithAPIVersion specifies the API version for the translation.
-func WithAPIVersion(version APIVersion) TranslateOption {
-	return func(o *TranslateOptions) error {
-		o.APIVersion = version
-		return nil
-	}
-}
 
 // WithSourceLang specifies the language of the text to be translated.
 // If this parameter is omitted, the API will attempt to detect the language of the text and translate it
@@ -297,5 +287,5 @@ func WithIgnoreTags(value []string) TranslateOption {
 }
 
 func translateOptionInvalidValueError(name string, value string) error {
-	return fmt.Errorf("invalid value for option %q: %s", name, value)
+	return fmt.Errorf("Invalid value for option `%s`: %s", name, value)
 }
